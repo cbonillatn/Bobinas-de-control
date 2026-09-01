@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Control de Bobinas</title>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --bg:#0d0f10;
+    --panel:#15181a;
+    --panel-2:#1c2023;
+    --border:#2a2f33;
+    --text:#e6e6e6;
+    --dim:#8a9199;
+    --accent:#f5a623;
+    --accent-dim:#7a5416;
+    --green:#3fb950;
+    --green-dim:#173d1f;
+    --red:#f85149;
+    --red-dim:#3d1717;
+    --mono:'JetBrains Mono', 'Consolas', monospace;
+  }
+  @font-face{
+    font-family:'JetBrains Mono';
+    src: local('JetBrains Mono');
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--mono);
+    min-height:100vh;
+  }
+  .wrap{
+    max-width:480px;
+    margin:0 auto;
+    padding:16px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 4px 18px 4px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:18px;
+  }
+  header h1{
+    font-size:15px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0;
+  }
+  header .user{
+    font-size:11px;
+    color:var(--dim);
+    text-align:right;
+  }
+  header .user b{color:var(--text);}
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px;
+    margin-bottom:14px;
+  }
+  .label{
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--dim);
+    margin-bottom:4px;
+  }
+  .cod{
+    font-size:22px;
+    font-weight:700;
+    color:var(--accent);
+    letter-spacing:1px;
+  }
+  .desc{
+    font-size:15px;
+    margin-top:4px;
+    color:var(--text);
+    line-height:1.4;
+  }
+  .meta-row{
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+  }
+  .meta-box{
+    flex:1;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 12px;
+  }
+  .meta-box .label{margin-bottom:2px;}
+  .meta-box .val{font-size:14px;}
+  .metraje-actual{
+    text-align:center;
+    padding:22px 10px;
+  }
+  .metraje-actual .num{
+    font-size:44px;
+    font-weight:800;
+    color:var(--green);
+    line-height:1;
+  }
+  .metraje-actual .unit{
+    font-size:12px;
+    color:var(--dim);
+    letter-spacing:2px;
+    margin-top:6px;
+    text-transform:uppercase;
+  }
+  input[type=text], input[type=number]{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:20px;
+    padding:14px;
+    border-radius:8px;
+    outline:none;
+    text-align:center;
+  }
+  input:focus{border-color:var(--accent);}
+  .quick-row{
+    display:flex;
+    gap:8px;
+    margin:12px 0;
+  }
+  .quick-btn{
+    flex:1;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:14px;
+    padding:12px 0;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  .quick-btn:active{background:var(--accent-dim);border-color:var(--accent);}
+  .btn{
+    width:100%;
+    padding:16px;
+    border-radius:8px;
+    border:none;
+    font-family:var(--mono);
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--accent);color:#1a1300;}
+  .btn-primary:active{opacity:0.85;}
+  .btn-primary:disabled{background:var(--border);color:var(--dim);cursor:not-allowed;}
+  .btn-secondary{background:var(--panel-2);color:var(--text);border:1px solid var(--border);margin-top:10px;}
+  .msg{
+    padding:14px;
+    border-radius:8px;
+    font-size:13px;
+    margin-bottom:14px;
+    line-height:1.5;
+  }
+  .msg-error{background:var(--red-dim);color:#ffb4ae;border:1px solid var(--red);}
+  .msg-success{background:var(--green-dim);color:#b7f5c1;border:1px solid var(--green);}
+  .center-msg{
+    text-align:center;
+    color:var(--dim);
+    font-size:13px;
+    padding:40px 10px;
+  }
+  .spinner{
+    width:26px;height:26px;
+    border:3px solid var(--border);
+    border-top-color:var(--accent);
+    border-radius:50%;
+    margin:0 auto 14px auto;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .footer-note{
+    font-size:10px;
+    color:var(--dim);
+    text-align:center;
+    margin-top:auto;
+    padding-top:20px;
+    opacity:0.6;
+  }
+  .modal-bg{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.7);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:24px;
+    max-width:360px;
+    width:100%;
+  }
+  .modal h2{font-size:14px;color:var(--accent);margin:0 0 14px 0;text-transform:uppercase;letter-spacing:1px;}
+  .result-diff{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    font-size:20px;
+    margin:16px 0;
+  }
+  .result-diff .old{color:var(--dim);text-decoration:line-through;font-size:16px;}
+  .result-diff .arrow{color:var(--dim);}
+  .result-diff .new{color:var(--green);font-weight:800;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header>
+    <h1>Control Bobinas</h1>
+    <div class="user" id="userBox"></div>
+  </header>
+  <div id="content">
+    <div class="center-msg"><div class="spinner"></div>Cargando…</div>
+  </div>
+  <div class="footer-note">Escanea el QR de la bobina para actualizar su metraje</div>
+</div>
+
+<script>
+// ======= CONFIGURACIÓN =======
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbybiIFgkVbCDZXWSNV72SQDbaZCwwl0jKSS2dpifZfuVouzOQoFIiytx9vjnHzQL_Im3w/exec"; // reemplazar tras publicar el Apps Script
+// ==============================
+
+const content = document.getElementById('content');
+const userBox = document.getElementById('userBox');
+let currentBobina = null;
+
+function getParam(name){
+  const p = new URLSearchParams(window.location.search);
+  return p.get(name);
+}
+
+function getUsuario(){
+  return localStorage.getItem('bobinas_usuario') || '';
+}
+function setUsuario(nombre){
+  localStorage.setItem('bobinas_usuario', nombre);
+  renderUserBox();
+}
+function renderUserBox(){
+  const u = getUsuario();
+  userBox.innerHTML = u ? `Usuario<br><b>${escapeHtml(u)}</b> <a href="#" onclick="cambiarUsuario();return false;" style="color:var(--dim);text-decoration:underline;">cambiar</a>` : '';
+}
+function cambiarUsuario(){
+  localStorage.removeItem('bobinas_usuario');
+  init();
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function apiGet(params){
+  const url = WEBAPP_URL + '?' + new URLSearchParams(params).toString();
+  const res = await fetch(url);
+  return res.json();
+}
+async function apiPost(body){
+  const res = await fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+let todasLasBobinas = [];
+
+function init(){
+  renderUserBox();
+  if (getParam('admin') === '1'){
+    renderAdmin();
+    return;
+  }
+  if (!getUsuario()){
+    renderPedirUsuario();
+    return;
+  }
+  const cod = getParam('cod');
+  if (cod){
+    cargarBobina(cod.trim());
+  } else {
+    renderListaBobinas();
+  }
+}
+
+function renderPedirUsuario(){
+  content.innerHTML = `
+    <div class="card">
+      <div class="label">Identificación</div>
+      <div class="desc" style="margin-bottom:14px;">Ingresa tu nombre para registrar los despachos que realices.</div>
+      <input type="text" id="nombreInput" placeholder="Tu nombre" autofocus>
+      <button class="btn btn-primary" style="margin-top:12px;" onclick="guardarUsuario()">Continuar</button>
+    </div>
+  `;
+  document.getElementById('nombreInput').addEventListener('keydown', e=>{
+    if(e.key==='Enter') guardarUsuario();
+  });
+}
+function guardarUsuario(){
+  const v = document.getElementById('nombreInput').value.trim();
+  if (!v){ return; }
+  setUsuario(v);
+  init();
+}
+
+async function renderListaBobinas(){
+  content.innerHTML = `<div class="center-msg"><div class="spinner"></div>Cargando bobinas del rack…</div>`;
+  try{
+    const data = await apiGet({action:'listar'});
+    if (data.error || !data.bobinas){
+      content.innerHTML = `<div class="msg msg-error">No se pudo cargar el listado de bobinas.</div>`;
+      return;
+    }
+    todasLasBobinas = data.bobinas;
+    content.innerHTML = `
+      <div class="card" style="padding-bottom:10px;">
+        <div class="label">Rack de bobinas</div>
+        <input type="text" id="filtroInput" placeholder="Buscar por código o descripción…" autofocus style="margin-top:8px;">
+      </div>
+      <div id="listaBobinas"></div>
+    `;
+    document.getElementById('filtroInput').addEventListener('input', renderFiltroLista);
+    renderFiltroLista();
+  } catch(err){
+    content.innerHTML = `<div class="msg msg-error">Error de conexión. Verifica tu internet e intenta de nuevo.</div>
+      <button class="btn btn-secondary" onclick="renderListaBobinas()">Reintentar</button>`;
+  }
+}
+
+function renderFiltroLista(){
+  const q = (document.getElementById('filtroInput').value || '').trim().toLowerCase();
+  const lista = document.getElementById('listaBobinas');
+  const filtradas = !q ? todasLasBobinas : todasLasBobinas.filter(b =>
+    String(b.cod).toLowerCase().includes(q) || String(b.descripcion).toLowerCase().includes(q)
+  );
+  if (filtradas.length === 0){
+    lista.innerHTML = `<div class="center-msg">Sin resultados para "${escapeHtml(q)}"</div>`;
+    return;
+  }
+  lista.innerHTML = filtradas.map(b => `
+    <div class="card" style="padding:14px 16px;cursor:pointer;margin-bottom:10px;" onclick="cargarBobina('${escapeHtml(String(b.cod)).replace(/'/g,"\\'")}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <div style="min-width:0;">
+          <div class="cod" style="font-size:15px;">${escapeHtml(b.cod)}</div>
+          <div class="desc" style="font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(b.descripcion)}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:16px;font-weight:800;color:var(--green);">${Number(b.metraje_actual)}</div>
+          <div style="font-size:9px;color:var(--dim);letter-spacing:1px;">METROS</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function cargarBobina(cod){
+  content.innerHTML = `<div class="center-msg"><div class="spinner"></div>Buscando ${escapeHtml(cod)}…</div>`;
+  try{
+    const data = await apiGet({action:'bobina', cod});
+    if (data.error){
+      content.innerHTML = `<div class="msg msg-error">${escapeHtml(data.error)}</div>` + buscarBtnHtml();
+      return;
+    }
+    if (!data.found){
+      content.innerHTML = `<div class="msg msg-error">No se encontró la bobina "${escapeHtml(cod)}".</div>` + buscarBtnHtml();
+      return;
+    }
+    currentBobina = data;
+    renderBobina();
+  } catch(err){
+    content.innerHTML = `<div class="msg msg-error">Error de conexión. Verifica tu internet e intenta de nuevo.</div>` + buscarBtnHtml();
+  }
+}
+function buscarBtnHtml(){
+  return `<button class="btn btn-secondary" onclick="renderListaBobinas()">Volver a la lista</button>`;
+}
+
+function renderBobina(){
+  const b = currentBobina;
+  content.innerHTML = `
+    <div class="card">
+      <div class="label">Código</div>
+      <div class="cod">${escapeHtml(b.cod)}</div>
+      <div class="desc">${escapeHtml(b.descripcion)}</div>
+      <div class="meta-row">
+        <div class="meta-box">
+          <div class="label">Serie</div>
+          <div class="val">${escapeHtml(b.serie)}</div>
+        </div>
+      </div>
+    </div>
+    <div class="card metraje-actual">
+      <div class="label">Metraje disponible</div>
+      <div class="num" id="metrajeActualNum">${Number(b.metraje_actual)}</div>
+      <div class="unit">metros</div>
+    </div>
+    <div class="card">
+      <div class="label">Registrar despacho (metros)</div>
+      <input type="number" inputmode="numeric" id="metrosInput" placeholder="0" min="1">
+      <div class="quick-row">
+        <button class="quick-btn" onclick="sumarRapido(10)">+10</button>
+        <button class="quick-btn" onclick="sumarRapido(50)">+50</button>
+        <button class="quick-btn" onclick="sumarRapido(100)">+100</button>
+        <button class="quick-btn" onclick="limpiarMetros()">C</button>
+      </div>
+      <button class="btn btn-primary" id="confirmarBtn" onclick="confirmarDespacho()">Confirmar despacho</button>
+      <button class="btn btn-secondary" onclick="renderListaBobinas()">Volver a la lista</button>
+    </div>
+  `;
+  document.getElementById('metrosInput').focus();
+}
+
+function sumarRapido(n){
+  const inp = document.getElementById('metrosInput');
+  const actual = parseInt(inp.value) || 0;
+  inp.value = actual + n;
+}
+function limpiarMetros(){
+  document.getElementById('metrosInput').value = '';
+  document.getElementById('metrosInput').focus();
+}
+
+async function confirmarDespacho(){
+  const metros = parseInt(document.getElementById('metrosInput').value);
+  if (!metros || metros <= 0){
+    alert('Ingresa una cantidad de metros válida.');
+    return;
+  }
+  if (metros > Number(currentBobina.metraje_actual)){
+    alert('Esa cantidad supera el metraje disponible (' + currentBobina.metraje_actual + ' m).');
+    return;
+  }
+  const btn = document.getElementById('confirmarBtn');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+  try{
+    const res = await apiPost({
+      action:'despacho',
+      cod: currentBobina.cod,
+      usuario: getUsuario(),
+      metros: metros
+    });
+    if (res.error){
+      alert(res.error);
+      btn.disabled = false;
+      btn.textContent = 'Confirmar despacho';
+      return;
+    }
+    renderResultado(res);
+  } catch(err){
+    alert('Error de conexión. Intenta de nuevo.');
+    btn.disabled = false;
+    btn.textContent = 'Confirmar despacho';
+  }
+}
+
+function renderResultado(res){
+  content.innerHTML = `
+    <div class="msg msg-success">Despacho registrado correctamente.</div>
+    <div class="card">
+      <div class="label">${escapeHtml(res.cod)}</div>
+      <div class="result-diff">
+        <span class="old">${res.metraje_anterior}</span>
+        <span class="arrow">→</span>
+        <span class="new">${res.metraje_nuevo} m</span>
+      </div>
+      <button class="btn btn-primary" onclick="renderListaBobinas()">Volver a la lista</button>
+    </div>
+  `;
+}
+
+// ======= MODO ADMIN: generar el QR único del rack =======
+function renderAdmin(){
+  const baseUrl = window.location.origin + window.location.pathname;
+  content.innerHTML = `
+    <div class="card">
+      <div class="label">Modo administrador</div>
+      <div class="desc">Este es el único QR que necesitas. Imprímelo y pégalo en el rack — al escanearlo se abre la lista completa de bobinas para buscar y despachar cualquiera de ellas.</div>
+      <button class="btn btn-primary" style="margin-top:12px;" onclick="window.print()">Imprimir QR del rack</button>
+    </div>
+    <div class="card qr-item" id="qrUnico" style="background:#fff;color:#111;text-align:center;padding:24px;">
+      <div style="font-weight:800;font-size:15px;margin-bottom:14px;">RACK DE BOBINAS — CABLES</div>
+    </div>
+  `;
+  const style = document.createElement('style');
+  style.textContent = `
+    .qr-item{display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    #qrUnico > div:nth-child(2){margin:0 auto;}
+    @media print{
+      body{background:#fff;}
+      header, .footer-note, .card:first-child{display:none;}
+      .qr-item{padding:60px 20px !important;}
+    }
+  `;
+  document.head.appendChild(style);
+  new QRCode(document.getElementById('qrUnico'), {
+    text: baseUrl,
+    width: 220,
+    height: 220
+  });
+  const nota = document.createElement('div');
+  nota.style.cssText = 'font-size:11px;color:#333;margin-top:14px;';
+  nota.textContent = 'Escanear para ver y actualizar cualquier bobina del rack';
+  document.getElementById('qrUnico').appendChild(nota);
+}
+
+init();
+</script>
+</body>
+</html>
